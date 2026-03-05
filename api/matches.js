@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
 
-  const API_KEY = "demo";
+  const API_KEY = "5276047c-bc27-4ba7-b48d-bc5a917af2fe";
 
   const url = `https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=0`;
 
