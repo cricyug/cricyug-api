@@ -15,13 +15,14 @@ export default async function handler(req, res) {
     const json = await response.json();
 
     return res.status(200).json({
-      usingDemoKey: API_KEY === "demo",
-      hasRealKey: API_KEY !== "demo",
-      apiStatus: json?.status || null,
-      total: Array.isArray(json?.data) ? json.data.length : 0,
-      rawKeys: Object.keys(json || {}),
-      data: Array.isArray(json?.data) ? json.data : []
-    });
+  usingDemoKey: API_KEY === "demo",
+  hasRealKey: API_KEY !== "demo",
+  apiStatus: json?.status || null,
+  reason: json?.reason || null,
+  total: Array.isArray(json?.data) ? json.data.length : 0,
+  rawKeys: Object.keys(json || {}),
+  data: Array.isArray(json?.data) ? json.data : []
+});
   } catch (error) {
     return res.status(500).json({
       usingDemoKey: API_KEY === "demo",
