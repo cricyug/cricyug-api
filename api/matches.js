@@ -1,4 +1,5 @@
 export default async function handler(req, res) {
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -14,20 +15,26 @@ export default async function handler(req, res) {
     const response = await fetch(url);
     const json = await response.json();
 
+    // If provider says failure, still return safe JSON for frontend
+    if (json?.status === "failure") {
+      return res.status(200).json({
+        apiStatus: "failure",
+        reason: json?.reason || "Unknown API failure",
+        data: []
+      });
+    }
+
+    const matches = Array.isArray(json?.data) ? json.data : [];
+
     return res.status(200).json({
-  usingDemoKey: API_KEY === "demo",
-  hasRealKey: API_KEY !== "demo",
-  apiStatus: json?.status || null,
-  reason: json?.reason || null,
-  total: Array.isArray(json?.data) ? json.data.length : 0,
-  rawKeys: Object.keys(json || {}),
-  data: Array.isArray(json?.data) ? json.data : []
-});
+      apiStatus: "success",
+      data: matches
+    });
   } catch (error) {
     return res.status(500).json({
-      usingDemoKey: API_KEY === "demo",
-      hasRealKey: API_KEY !== "demo",
-      error: "Failed to fetch matches"
+      apiStatus: "failure",
+      reason: "Failed to fetch matches",
+      data: []
     });
   }
 }
