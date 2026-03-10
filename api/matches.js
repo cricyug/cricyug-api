@@ -6,7 +6,6 @@ let cache = {
 const CACHE_TIME = 2 * 60 * 1000; // 2 minutes
 
 export default async function handler(req, res) {
-
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -35,27 +34,50 @@ export default async function handler(req, res) {
     });
   }
 
+  const url = `https://api.cricketdata.org/v1/currentMatches?apikey=${API_KEY}`;
+
   try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json"
+      }
+    });
 
-    const response = await fetch(
-      `https://api.cricketdata.org/v1/currentMatches?apikey=${API_KEY}`
-    );
+    const text = await response.text();
 
-    const json = await response.json();
-
-    if (!json || !json.data) {
-      throw new Error("Invalid API response");
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      return res.status(500).json({
+        apiStatus: "failure",
+        reason: "Invalid JSON from upstream API",
+        raw: text,
+        data: []
+      });
     }
 
-    const matches = json.data.map(match => ({
-      id: match.id,
-      name: match.name,
-      status: match.status,
-      venue: match.venue,
-      teams: match.teams || [],
-      matchStarted: match.matchStarted,
-      matchEnded: match.matchEnded
-    }));
+    if (!response.ok) {
+      return res.status(response.status).json({
+        apiStatus: "failure",
+        reason: `Upstream status ${response.status}`,
+        upstream: json,
+        data: []
+      });
+    }
+
+    const matches = Array.isArray(json.data)
+      ? json.data.map((match) => ({
+          id: match.id || "",
+          name: match.name || "Match",
+          status: match.status || "No status",
+          venue: match.venue || "Unknown venue",
+          teams: Array.isArray(match.teams) ? match.teams : [],
+          matchStarted: !!match.matchStarted,
+          matchEnded: !!match.matchEnded
+        }))
+      : [];
 
     cache = {
       data: matches,
@@ -65,18 +87,16 @@ export default async function handler(req, res) {
     return res.status(200).json({
       apiStatus: "success",
       source: "api",
+      count: matches.length,
       data: matches
     });
-
   } catch (err) {
-
-    console.error("API ERROR:", err);
-
     return res.status(500).json({
       apiStatus: "failure",
-      reason: err.message,
+      reason: err.message || "fetch failed",
+      name: err.name || "Error",
+      apiUrl: url,
       data: []
     });
-
   }
 }
