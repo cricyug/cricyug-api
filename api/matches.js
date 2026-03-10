@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const url = `https://api.cricketdata.org/v1/currentMatches?apikey=${API_KEY}`;
+  const url = `https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=0`;
 
   try {
     const response = await fetch(url, {
@@ -62,6 +62,15 @@ export default async function handler(req, res) {
       return res.status(response.status).json({
         apiStatus: "failure",
         reason: `Upstream status ${response.status}`,
+        upstream: json,
+        data: []
+      });
+    }
+
+    if (json.status && json.status !== "success") {
+      return res.status(500).json({
+        apiStatus: "failure",
+        reason: json.reason || "Upstream returned failure",
         upstream: json,
         data: []
       });
