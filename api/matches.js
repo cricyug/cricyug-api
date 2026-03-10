@@ -7,7 +7,6 @@ const CACHE_TIME = 2 * 60 * 1000; // 2 minutes
 
 export default async function handler(req, res) {
 
-  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -28,7 +27,6 @@ export default async function handler(req, res) {
 
   const now = Date.now();
 
-  // return cache
   if (cache.data && now - cache.timestamp < CACHE_TIME) {
     return res.status(200).json({
       apiStatus: "success",
@@ -40,22 +38,25 @@ export default async function handler(req, res) {
   try {
 
     const response = await fetch(
-      `https://api.cricketdata.org/v1/currentMatches?apikey=${API_KEY}&offset=0`
+      `https://api.cricketdata.org/v1/currentMatches?apikey=${API_KEY}`
     );
 
     const json = await response.json();
 
-    const matches = (json.data || []).map(match => ({
+    if (!json || !json.data) {
+      throw new Error("Invalid API response");
+    }
+
+    const matches = json.data.map(match => ({
       id: match.id,
       name: match.name,
       status: match.status,
       venue: match.venue,
-      teams: match.teams,
+      teams: match.teams || [],
       matchStarted: match.matchStarted,
       matchEnded: match.matchEnded
     }));
 
-    // save cache
     cache = {
       data: matches,
       timestamp: now
@@ -69,11 +70,11 @@ export default async function handler(req, res) {
 
   } catch (err) {
 
-    console.error(err);
+    console.error("API ERROR:", err);
 
     return res.status(500).json({
       apiStatus: "failure",
-      reason: "API fetch failed",
+      reason: err.message,
       data: []
     });
 
