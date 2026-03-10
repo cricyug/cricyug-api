@@ -6,6 +6,7 @@ let cache = {
 const CACHE_TIME = 2 * 60 * 1000; // 2 minutes
 
 export default async function handler(req, res) {
+
   // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -27,54 +28,54 @@ export default async function handler(req, res) {
 
   const now = Date.now();
 
-  // Return cache if fresh
+  // return cache
   if (cache.data && now - cache.timestamp < CACHE_TIME) {
     return res.status(200).json({
       apiStatus: "success",
       source: "cache",
-      total: cache.data.length,
       data: cache.data
     });
   }
 
-  const url = `https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=0`;
-
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
-    });
+
+    const response = await fetch(
+      `https://api.cricketdata.org/v1/currentMatches?apikey=${API_KEY}&offset=0`
+    );
 
     const json = await response.json();
 
-    if (json?.status === "failure") {
-      return res.status(200).json({
-        apiStatus: "failure",
-        reason: json?.reason || "API failure",
-        data: []
-      });
-    }
+    const matches = (json.data || []).map(match => ({
+      id: match.id,
+      name: match.name,
+      status: match.status,
+      venue: match.venue,
+      teams: match.teams,
+      matchStarted: match.matchStarted,
+      matchEnded: match.matchEnded
+    }));
 
-    const matches = Array.isArray(json?.data) ? json.data : [];
-
-    // Save to cache
-    cache.data = matches;
-    cache.timestamp = now;
+    // save cache
+    cache = {
+      data: matches,
+      timestamp: now
+    };
 
     return res.status(200).json({
       apiStatus: "success",
-      source: "live",
-      total: matches.length,
+      source: "api",
       data: matches
     });
 
-  } catch (error) {
+  } catch (err) {
+
+    console.error(err);
+
     return res.status(500).json({
       apiStatus: "failure",
-      reason: "Server error fetching matches",
+      reason: "API fetch failed",
       data: []
     });
+
   }
 }
