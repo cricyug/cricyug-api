@@ -1,10 +1,14 @@
 
-CricYug Fixed API
+SUPER CRICYUG API
 
-Environment Variable Required:
-CRICKETDATA_API_KEY
+Deploy this repo to Vercel.
 
-Endpoints:
+Required Environment Variable:
+
+CRICKETDATA_API_KEY = your cricketdata.org API key
+
+API Endpoints:
+
 /api/matches
-/api/match?id=MATCH_ID
-/api/scorecard?id=MATCH_ID
+/api/match?id=xxxx
+/api/scorecard?id=xxxx

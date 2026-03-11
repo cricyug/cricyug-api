@@ -1,11 +1,4 @@
 
-let cache = {
-  data: null,
-  timestamp: 0
-};
-
-const CACHE_TIME = 2 * 60 * 1000;
-
 export default async function handler(req, res) {
 
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -26,20 +19,10 @@ export default async function handler(req, res) {
     });
   }
 
-  const now = Date.now();
-
-  if (cache.data && now - cache.timestamp < CACHE_TIME) {
-    return res.status(200).json({
-      apiStatus: "success",
-      source: "cache",
-      data: cache.data
-    });
-  }
-
   try {
 
     const response = await fetch(
-      `https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=0`
+      `https://api.cricketdata.org/v1/currentMatches?apikey=${API_KEY}&offset=0`
     );
 
     const json = await response.json();
@@ -51,17 +34,14 @@ export default async function handler(req, res) {
       venue: match.venue,
       teams: match.teams,
       matchStarted: match.matchStarted,
-      matchEnded: match.matchEnded
+      matchEnded: match.matchEnded,
+      date: match.date,
+      matchType: match.matchType,
+      score: match.score
     }));
-
-    cache = {
-      data: matches,
-      timestamp: now
-    };
 
     return res.status(200).json({
       apiStatus: "success",
-      source: "api",
       data: matches
     });
 
@@ -69,7 +49,7 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       apiStatus: "failure",
-      reason: err.message || "API fetch failed",
+      reason: "API fetch failed",
       data: []
     });
 
