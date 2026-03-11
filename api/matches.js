@@ -39,7 +39,7 @@ export default async function handler(req, res) {
   try {
 
     const response = await fetch(
-      `https://api.cricketdata.org/v1/currentMatches?apikey=${API_KEY}&offset=0`
+      `https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=0`
     );
 
     const json = await response.json();
@@ -67,11 +67,9 @@ export default async function handler(req, res) {
 
   } catch (err) {
 
-    console.error(err);
-
     return res.status(500).json({
       apiStatus: "failure",
-      reason: "API fetch failed",
+      reason: err.message || "API fetch failed",
       data: []
     });
 

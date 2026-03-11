@@ -4,6 +4,7 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   const { id } = req.query;
+  const API_KEY = process.env.CRICKETDATA_API_KEY;
 
   if (!id) {
     return res.status(400).json({
@@ -12,12 +13,10 @@ export default async function handler(req, res) {
     });
   }
 
-  const API_KEY = process.env.CRICKETDATA_API_KEY;
-
   try {
 
     const response = await fetch(
-      `https://api.cricketdata.org/v1/match_scorecard?apikey=${API_KEY}&id=${id}`
+      `https://api.cricapi.com/v1/match_scorecard?apikey=${API_KEY}&id=${id}`
     );
 
     const json = await response.json();
